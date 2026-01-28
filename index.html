@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Momentum Dashboard — Buy / Trim / Exit / Hold (v1.6 icons)</title>
+  <style>
+    :root{
+      --bg:#0f1117;--panel:#151a23;--muted:#9aa4b2;--text:#e7ecf3;--line:#232b3a;
+      --buy:#23c55e;--trim:#f59e0b;--exit:#ef4444;--hold:#64748b
+    }
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial}
+    body{margin:0;background:var(--bg);color:var(--text)}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px;background:#0c1118;border-bottom:1px solid var(--line);position:sticky;top:0}
+    h1{margin:0;font-size:18px;font-weight:600}
+    .banner{background:#3b1d1d;color:#ffdada;border-bottom:1px solid #5c2a2a;padding:8px 16px;font-size:13px;display:none}
+    .container{max-width:1100px;margin:16px auto;padding:0 12px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;flex:1 1 360px;min-width:320px}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,button{border-radius:10px;border:1px solid #263043;background:#0f1420;color:#e7ecf3;padding:10px 12px}
+    button{background:#7aa2ff;border-color:#7aa2ff;color:#0b0e14;font-weight:600;cursor:pointer}
+    button.secondary{background:#1e2637;border-color:#2a3550;color:#e7ecf3}
+    .grid{width:100%;border-collapse:collapse}
+    .grid th,.grid td{padding:8px 10px;border-bottom:1px solid var(--line);font-size:14px}
+    .pill{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:24px;padding:0 8px;border-radius:999px;font-weight:700;font-size:14px}
+    .buy{background:rgba(35,197,94,.15);color:var(--buy)}
+    .trim{background:rgba(245,158,11,.15);color:var(--trim)}
+    .exit{background:rgba(239,68,68,.15);color:var(--exit)}
+    .hold{background:rgba(100,116,139,.25);color:#cbd5e1}
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .symbol-chip{display:inline-flex;gap:6px;align-items:center;background:#0f1420;border:1px solid var(--line);padding:6px 10px;border-radius:999px;margin:0 8px 8px 0}
+    .symbol-chip button{background:transparent;border-color:#39435c;color:#cbd5e1;padding:2px 8px;cursor:pointer}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Momentum Dashboard — Buy / Trim / Exit / Hold</h1>
+  <div class="small muted">v1.6 (icons) · Use your Alpha Vantage key → add symbols → Refresh.</div>
+</header>
+<div id="banner" class="banner"></div>
+<div class="container">
+  <div class="row">
+    <section class="card" style="flex:2">
+      <h3 style="margin:0 0 8px 0">Data</h3>
+      <label>Alpha Vantage API Key</label>
+      <input id="apiKey" placeholder="Paste your AV key" style="width:100%" />
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="newSym" placeholder="Add symbol (e.g., AMD)" style="flex:1" />
+        <button id="addSymBtn">Add</button>
+        <button class="secondary" id="clearSymsBtn">Clear</button>
+      </div>
+      <div id="syms" style="margin-top:10px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+        <button id="refreshBtn">Refresh</button>
+        <button class="secondary" id="testBtn">Send Test</button>
+        <div style="display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:wrap">
+          <label style="margin:0">Mode</label>
+          <select id="mode" style="padding:8px 10px">
+            <option value="daily">Daily (EOD)</option>
+            <option value="intraday">Intraday</option>
+          </select>
+          <label style="margin:0">Interval</label>
+          <select id="interval" style="padding:8px 10px">
+            <option value="15">15m</option>
+            <option value="5">5m</option>
+          </select>
+          <label style="margin:0">Auto-refresh</label>
+          <select id="autor" style="padding:8px 10px">
+            <option value="off">Off</option>
+            <option value="5">Every 5m</option>
+            <option value="15">Every 15m</option>
+            <option value="30">Every 30m</option>
+            <option value="60">Every 60m</option>
+          </select>
+        </div>
+      </div>
+      <p class="small muted" style="margin-top:8px">Alpha Vantage free tier is ~5 calls/min and 500/day. The app auto-spaces requests.</p>
+    </section>
+
+    <section class="card" style="flex:3">
+      <h3 style="margin:0 0 8px 0">Rules</h3>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:10px">
+        <div>
+          <label>RSI length</label>
+          <input id="rsiLen" type="number" value="14" />
+        </div>
+        <div>
+          <label>BUY band (low–high)</label>
+          <input id="buyBand" value="55,70" />
+        </div>
+        <div>
+          <label>MA lengths (fast, slow)</label>
+          <input id="mas" value="20,50" />
+        </div>
+        <div>
+          <label>Vol avg len × multiplier</label>
+          <input id="vol" value="50,1.5" />
+        </div>
+        <div>
+          <label>TRIM: RSI ≥</label>
+          <input id="trimRsi" type="number" value="75" />
+        </div>
+        <div>
+          <label>TRIM: % below 5-day high</label>
+          <input id="trimDrop" type="number" value="3" />
+        </div>
+        <div style="grid-column:1 / span 2">
+          <label><input type="checkbox" id="ignoreVol" /> Ignore volume filter (mobile / testing)</label>
+        </div>
+        <div style="grid-column:1 / span 2">
+          <label><input type="checkbox" id="twoClosesExit" checked /> EXIT on two consecutive closes below fast MA</label>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h3 style="margin:0 0 8px 0">Signals</h3>
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>Symbol</th><th>State</th><th>RSI</th><th>Close</th><th>SMA(f)</th><th>SMA(s)</th><th>Vol ×Avg</th><th>Updated</th><th>Diagnostics</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </section>
+
+  <p class="small muted" style="margin:16px 4px">Educational only. Use end-of-day for cleaner signals. Keys and settings are stored locally in your browser.</p>
+</div>
+
+<script>
+const VERSION = 'v1.6-icons';
+console.log('Momentum Dashboard', VERSION);
+const $ = id => document.getElementById(id);
+const fmt2 = x => (x!=null && isFinite(x)) ? (+x).toFixed(2) : '-';
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+function sma(arr, len){
+  const out = new Array(arr.length).fill(NaN); let sum=0;
+  for(let i=0;i<arr.length;i++){ sum+=arr[i]; if(i>=len) sum-=arr[i-len]; if(i>=len-1) out[i]=sum/len; }
+  return out;
+}
+function highest(arr,len){
+  const out=new Array(arr.length).fill(NaN);
+  for(let i=0;i<arr.length;i++){ if(i>=len-1){ let m=-Infinity; for(let j=i-len+1;j<=i;j++) m=Math.max(m,arr[j]); out[i]=m; } }
+  return out;
+}
+function rsi(closes,len=14){
+  const n=closes.length, out=new Array(n).fill(NaN); if(n<len+1) return out;
+  let gain=0, loss=0;
+  for(let i=1;i<=len;i++){ const ch=closes[i]-closes[i-1]; gain+=Math.max(ch,0); loss+=Math.max(-ch,0); }
+  let ag=gain/len, al=loss/len; out[len]=100-100/(1+(ag/(al||1e-9)));
+  for(let i=len+1;i<n;i++){
+    const ch=closes[i]-closes[i-1]; const up=Math.max(ch,0), dn=Math.max(-ch,0);
+    ag=(ag*(len-1)+up)/len; al=(al*(len-1)+dn)/len; out[i]=100-100/(1+(ag/(al||1e-9)));
+  }
+  return out;
+}
+
+// ----------- robust symbol storage -----------
+(function ensureSymbols(){
+  try{
+    const raw = localStorage.momo_syms;
+    window.symbols = raw ? JSON.parse(raw) : ["AMD","MU","SMH"];
+    if(!Array.isArray(window.symbols)) throw new Error('bad');
+  }catch(e){
+    window.symbols = [];
+    try{ localStorage.removeItem('momo_syms'); }catch{}
+  }
+})();
+
+let apiKey  = localStorage.momo_avkey || '';
+
+function saveSyms(){
+  try{ localStorage.momo_syms = JSON.stringify(window.symbols||[]); }catch{}
+  renderSyms();
+}
+function renderSyms(){
+  const c=$('syms'); if(!c) return;
+  c.innerHTML='';
+  if(!window.symbols.length){
+    c.innerHTML='<span class="small muted">No symbols yet. Add one above.</span>';
+  }
+  (window.symbols||[]).forEach(s=>{
+    const chip=document.createElement('span');
+    chip.className='symbol-chip';
+    chip.innerHTML=`${s} <button data-sym="${s}">×</button>`;
+    chip.querySelector('button').onclick=()=>{
+      window.symbols = (window.symbols||[]).filter(x=>x!==s);
+      saveSyms();
+      refresh();
+    };
+    c.appendChild(chip);
+  });
+}
+
+// UI wiring
+$('addSymBtn').onclick=()=>{
+  const v=$('newSym').value.trim().toUpperCase();
+  if(!v){ showBanner('Enter a symbol (e.g., AMD)'); return; }
+  if((window.symbols||[]).includes(v)){ showBanner(v+' is already added'); return; }
+  window.symbols.push(v); saveSyms(); $('newSym').value=''; showBanner('Added '+v); refresh();
+};
+$('newSym').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ $('addSymBtn').click(); } });
+$('clearSymsBtn').onclick=()=>{ window.symbols=[]; saveSyms(); refresh(); };
+$('refreshBtn').onclick=refresh;
+$('testBtn').onclick=()=>{ try{ if('Notification' in window){ if(Notification.permission==='granted'){ new Notification('TEST — BUY | RSI 60 | Close 123'); } else { Notification.requestPermission(); } } else { alert('TEST notification fired.'); } }catch(e){ alert('TEST notification fired.'); } };
+$('apiKey').value=apiKey; $('apiKey').onchange=()=>{ apiKey=$('apiKey').value.trim(); localStorage.momo_avkey=apiKey; };
+renderSyms();
+
+// ----------- data fetchers -----------
+async function fetchDaily(sym){
+  if(!apiKey) throw new Error('Enter your Alpha Vantage key.');
+  const url=`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(sym)}&apikey=${apiKey}&outputsize=compact`;
+  const res = await fetch(url); const json = await res.json();
+  if(json['Error Message']) throw new Error('API error for '+sym);
+  if(json['Note']) throw new Error('RATE_LIMIT: '+json['Note']);
+  const ts = json['Time Series (Daily)']||{}; const dates = Object.keys(ts).sort();
+  const rows = dates.map(d=>({
+    date:d, open:+ts[d]['1. open'], high:+ts[d]['2. high'], low:+ts[d]['3. low'], close:+ts[d]['4. close'], volume:+ts[d]['5. volume']
+  }));
+  return rows.slice(-200);
+}
+async function fetchIntraday(sym, interval="15"){
+  if(!apiKey) throw new Error('Enter your Alpha Vantage key.');
+  const iv = (interval==="5"||interval==="15") ? interval : "15";
+  const url=`https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${encodeURIComponent(sym)}&interval=${iv}min&apikey=${apiKey}&outputsize=compact`;
+  const res = await fetch(url); const json = await res.json();
+  if(json['Error Message']) throw new Error('API error for '+sym);
+  if(json['Note']) throw new Error('RATE_LIMIT: '+json['Note']);
+  const key = `Time Series (${iv}min)`; const ts = json[key]||{}; const stamps = Object.keys(ts).sort();
+  if(stamps.length===0) throw new Error('No intraday data');
+  const rows = stamps.map(t=>({
+    date:t, open:+ts[t]['1. open'], high:+ts[t]['2. high'], low:+ts[t]['3. low'], close:+ts[t]['4. close'], volume:+ts[t]['5. volume']
+  }));
+  return rows.slice(-400);
+}
+async function fetchSeries(sym){
+  const mode = (localStorage.momo_mode||'daily');
+  if(mode==='intraday'){
+    const iv = localStorage.momo_interval||'15';
+    return fetchIntraday(sym, iv);
+  }
+  return fetchDaily(sym);
+}
+
+// ----------- signal logic -----------
+function computeState(rows){
+  const rsiLen = +$('rsiLen').value||14;
+  const [bandL,bandH] = $('buyBand').value.split(',').map(Number);
+  const [maFast,maSlow] = $('mas').value.split(',').map(Number);
+  const [volLen,volMult] = $('vol').value.split(',').map(Number);
+  const trimRSI = +$('trimRsi').value||75;
+  const trimDrop = (+$('trimDrop').value||3)/100;
+  const twoClosesExit = $('twoClosesExit').checked;
+  const ignoreVol = $('ignoreVol').checked;
+
+  const closes = rows.map(r=>r.close);
+  const highs  = rows.map(r=>r.high);
+  const vols   = rows.map(r=>r.volume||0);
+  const r = rsi(closes, rsiLen);
+  const maF = sma(closes, maFast);
+  const maS = sma(closes, maSlow);
+  const vAvg = sma(vols, volLen);
+  const hi5  = highest(highs, 5);
+  const i = rows.length-1;
+
+  const inBand   = r[i] >= bandL && r[i] <= bandH;
+  const trendOK  = closes[i] > maF[i] && closes[i] > maS[i];
+  const volOK    = ignoreVol ? true : (vols[i] > (vAvg[i]||Infinity) * volMult);
+  const risingRSI= r[i] > (r[i-1]??r[i]);
+  const BUY  = inBand && trendOK && volOK && risingRSI;
+  const TRIM = (r[i] >= trimRSI && (r[i-1]??0) >= trimRSI) || (hi5[i] ? closes[i] <= hi5[i]*(1-trimDrop) : false);
+
+  let EXIT=false;
+  if(twoClosesExit){
+    EXIT = (closes[i] < (maF[i]||Infinity)) && ((closes[i-1]||Infinity) < (maF[i-1]||Infinity));
+  } else {
+    EXIT = closes[i] < (maF[i]||Infinity);
+  }
+
+  let state='HOLD';
+  if(EXIT) state='EXIT'; else if(TRIM) state='TRIM'; else if(BUY) state='BUY';
+
+  const diag = `${trendOK?'✅':'❌'}Trend  ${inBand?'✅':'❌'}RSI  ${volOK?'✅':'❌'}Vol  ${risingRSI?'✅':'❌'}Rise`;
+
+  return { state, rsi:r[i], close:closes[i], smaF:maF[i], smaS:maS[i], volx:(vAvg[i]? (vols[i]/vAvg[i]) : 0), diag };
+}
+
+// ----------- table refresh & auto-refresh -----------
+async function refresh(){
+  const syms = (window.symbols||[]).slice();
+  const tbody = $('tbody');
+  tbody.innerHTML='';
+  for(const s of syms){
+    const tr=document.createElement('tr'); tr.innerHTML=`<td>${s}</td><td class="muted">…</td><td colspan="6" class="muted">Loading…</td><td class="small"></td>`; tbody.appendChild(tr);
+  }
+  for(const s of syms){
+    const idx = syms.indexOf(s);
+    try{
+      const rows = await fetchSeries(s);
+      const res = computeState(rows);
+      const t = tbody.rows[idx];
+      t.innerHTML = `<td>${s}</td><td>${pill(res.state)}</td><td>${fmt2(res.rsi)}</td><td>${fmt2(res.close)}</td><td>${fmt2(res.smaF)}</td><td>${fmt2(res.smaS)}</td><td>${res.volx?res.volx.toFixed(2)+"x":"-"}</td><td>${new Date().toLocaleTimeString()}</td><td class="small">${res.diag||''}</td>`;
+      if(window.Notification && Notification.permission==='granted' && res.state!=='HOLD')
+        new Notification(`${s} — ${res.state} | RSI ${fmt2(res.rsi)} | ${fmt2(res.close)}`);
+    }catch(e){
+      const t = tbody.rows[idx];
+      t.innerHTML = `<td>${s}</td><td class="hold">${pill('HOLD')}</td><td colspan="6" class="muted">${(e&&e.message)||'Error'}</td><td class="small"></td>`;
+      if(String((e&&e.message)||'').startsWith('RATE_LIMIT')) showBanner('Alpha Vantage rate limit hit. Free tier allows ~5 calls/min. Please wait 60s and try again.');
+      if(String((e&&e.message)||'').includes('API key')) showBanner('Enter your Alpha Vantage API key and press Refresh.');
+    }
+    await sleep(1200);
+  }
+}
+function pill(state){
+  const icon = state==='BUY' ? '✅' : state==='TRIM' ? '✂️' : state==='EXIT' ? '❌' : '🧊';
+  return `<span class="pill ${state.toLowerCase()}" title="${state}" aria-label="${state}">${icon}</span>`;
+}
+
+if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+
+function showBanner(msg){
+  const b = document.getElementById('banner');
+  if(!b) return;
+  b.textContent = msg;
+  b.style.display = 'block';
+  clearTimeout(window._bannerTimer);
+  window._bannerTimer = setTimeout(()=>{ b.style.display='none'; }, 7000);
+}
+
+// restore persisted rule values
+try{
+  const stash = JSON.parse(localStorage.momo_rules||'{}');
+  if(stash.rsiLen) $('rsiLen').value = stash.rsiLen;
+  if(stash.buyBand) $('buyBand').value = stash.buyBand;
+  if(stash.mas) $('mas').value = stash.mas;
+  if(stash.vol) $('vol').value = stash.vol;
+  if(stash.trimRsi) $('trimRsi').value = stash.trimRsi;
+  if(stash.trimDrop) $('trimDrop').value = stash.trimDrop;
+  if(typeof stash.twoClosesExit==='boolean') $('twoClosesExit').checked = stash.twoClosesExit;
+  if(typeof stash.ignoreVol==='boolean') $('ignoreVol').checked = stash.ignoreVol;
+}catch{}
+['rsiLen','buyBand','mas','vol','trimRsi','trimDrop','twoClosesExit','ignoreVol'].forEach(id=>{
+  const el=$(id); el.onchange=()=>{
+    const blob={ rsiLen:+$('rsiLen').value, buyBand:$('buyBand').value, mas:$('mas').value, vol:$('vol').value, trimRsi:+$('trimRsi').value, trimDrop:+$('trimDrop').value, twoClosesExit:$('twoClosesExit').checked, ignoreVol:$('ignoreVol').checked };
+    localStorage.momo_rules = JSON.stringify(blob);
+  };
+});
+
+// Mode/interval/auto-refresh controls
+const modeSel = document.getElementById('mode');
+const intSel  = document.getElementById('interval');
+const autorSel= document.getElementById('autor');
+modeSel.value = localStorage.momo_mode || 'daily';
+intSel.value  = localStorage.momo_interval || '15';
+autorSel.value= localStorage.momo_autor || 'off';
+intSel.style.display = (modeSel.value==='intraday') ? 'inline-block' : 'none';
+modeSel.onchange = ()=>{ localStorage.momo_mode = modeSel.value; intSel.style.display = (modeSel.value==='intraday') ? 'inline-block' : 'none'; showBanner(modeSel.value==='intraday' ? 'Intraday mode uses more API calls (watch rate limits).' : 'Daily EOD mode selected.'); };
+intSel.onchange  = ()=>{ localStorage.momo_interval = intSel.value; showBanner(`Interval set to ${intSel.value}m`); };
+autorSel.onchange= ()=>{ localStorage.momo_autor = autorSel.value; restartAuto(); showBanner(autorSel.value==='off' ? 'Auto-refresh off' : `Auto-refresh every ${autorSel.value}m`); };
+
+let _autorTimer=null;
+function restartAuto(){
+  if(_autorTimer){ clearInterval(_autorTimer); _autorTimer=null; }
+  const v = localStorage.momo_autor||'off';
+  if(v==='off') return;
+  const mins = parseInt(v,10);
+  _autorTimer = setInterval(()=>{ refresh(); }, mins*60*1000);
+}
+restartAuto();
+
+// Initial paint
+refresh();
+</script>
+</body>
+</html>
