@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Dashboard - Twelve Data</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            color: #60a5fa;
+        }
+        
+        .api-usage {
+            padding: 8px 16px;
+            background-color: #1e293b;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            font-size: 14px;
+        }
+        
+        .card {
+            background-color: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            margin-bottom: 20px;
+        }
+        
+        .info-banner {
+            padding: 12px;
+            background-color: #1e3a8a;
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #bfdbfe;
+            margin-bottom: 20px;
+        }
+        
+        input[type="text"], input[type="password"] {
+            padding: 10px;
+            font-size: 14px;
+            background-color: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #e2e8f0;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background-color: #2563eb;
+        }
+        
+        button:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        button.success {
+            background-color: #10b981;
+        }
+        
+        button.success:hover {
+            background-color: #059669;
+        }
+        
+        button.continue {
+            background-color: #f59e0b;
+            animation: pulse 2s infinite;
+        }
+        
+        button.continue:hover {
+            background-color: #d97706;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .status {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status.success {
+            background-color: #065f46;
+            color: #6ee7b7;
+        }
+        
+        .status.error {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+        }
+        
+        .stock-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background-color: #334155;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 4px;
+        }
+        
+        .stock-chip button {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            padding: 2px;
+            font-size: 18px;
+            line-height: 1;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            background-color: #1e293b;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th {
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 700;
+            color: #94a3b8;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            background-color: #0f172a;
+            border-bottom: 2px solid #334155;
+        }
+        
+        td {
+            padding: 14px 12px;
+            color: #e2e8f0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        tr:hover {
+            background-color: #334155;
+        }
+        
+        .diagnostic-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            margin: 2px;
+        }
+        
+        .diagnostic-badge.pass {
+            background-color: #065f46;
+            color: #6ee7b7;
+        }
+        
+        .diagnostic-badge.fail {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+        }
+        
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .preset-button {
+            padding: 6px 12px;
+            background-color: #334155;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .error-log {
+            background-color: #7f1d1d;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #991b1b;
+            margin-bottom: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .error-log pre {
+            font-family: Monaco, monospace;
+            font-size: 12px;
+            color: #fecaca;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Trading Dashboard</h1>
+            <div class="api-usage">
+                <strong id="apiCallsUsed">0</strong> / 800 calls used
+                <span style="color: #94a3b8; margin-left: 8px;">
+                    (~<span id="refreshesLeft">0</span> refreshes left)
+                </span>
+            </div>
+        </div>
+
+        <div class="info-banner">
+            ℹ️ <strong>How it works:</strong> Click "Refresh Data" to process 4 stocks. Wait 1 minute. Click "Continue" for next 4. Repeat until all 12 are done (3 clicks total, ~3 minutes).
+        </div>
+
+        <div class="card">
+            <label style="display: block; margin-bottom: 8px; color: #94a3b8; font-weight: 600;">
+                Twelve Data API Key:
+            </label>
+            <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+                <input 
+                    type="password" 
+                    id="apiKey" 
+                    value="e58789837020410bb3a50420942ac926"
+                    placeholder="Enter your API key"
+                    style="flex: 1; min-width: 300px;"
+                />
+                <button id="testBtn" class="success">Test Connection</button>
+            </div>
+            <div id="apiStatus"></div>
+        </div>
+
+        <div class="card">
+            <div style="margin-bottom: 12px; color: #94a3b8; font-size: 14px; font-weight: 600;">
+                Manage Stocks (<span id="stockCount">12</span> total):
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+                <input 
+                    type="text" 
+                    id="newSymbol" 
+                    placeholder="Enter symbol (e.g., TSLA)"
+                    style="flex: 1; min-width: 200px;"
+                />
+                <button id="addStockBtn">+ Add Stock</button>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <div style="font-size: 13px; color: #94a3b8; margin-bottom: 6px;">Quick Add:</div>
+                <button class="preset-button" onclick="addPreset(['NVDA','AMD','INTC','QCOM','AVGO'])">+ Semiconductors</button>
+                <button class="preset-button" onclick="addPreset(['GOOGL','MSFT','AAPL','AMZN','META'])">+ Big Tech</button>
+                <button class="preset-button" onclick="addPreset(['TSM','ASML','AMAT','KLAC'])">+ Chip Equipment</button>
+                <button class="preset-button" onclick="addPreset(['PLTR','SNOW','DDOG','NET','CRWD'])">+ AI/Cloud</button>
+            </div>
+
+            <div id="stockList"></div>
+        </div>
+
+        <div class="controls">
+            <button id="refreshBtn">🔄 Refresh Data (<span id="callEstimate">24</span> calls)</button>
+            <div id="lastUpdate" style="color: #94a3b8; font-size: 14px;"></div>
+            <div id="progressIndicator" style="display: none; color: #60a5fa; font-size: 14px; font-weight: 600;"></div>
+        </div>
+
+        <div id="errorLog" style="display: none;"></div>
+
+        <div style="overflow-x: auto; background-color: #1e293b; border-radius: 8px; border: 1px solid #334155;">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>State</th>
+                        <th>RSI</th>
+                        <th>Close</th>
+                        <th>SMA(fast)</th>
+                        <th>SMA(slow)</th>
+                        <th>Vol ×Avg</th>
+                        <th>Updated</th>
+                        <th>Diagnostics</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: #94a3b8;">
+                            Click "Refresh Data" to load stock information
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <h3 style="font-size: 16px; margin-bottom: 12px; color: #60a5fa; font-weight: 600;">
+                📖 State Indicators
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; font-size: 14px; line-height: 1.6;">
+                <div>🚀 <strong>Oversold + Uptrend</strong> - Buy signal</div>
+                <div>🔥 <strong>Overbought</strong> - Caution</div>
+                <div>📈 <strong>Normal uptrend</strong> - Bullish</div>
+                <div>📉 <strong>Normal downtrend</strong> - Bearish</div>
+                <div>❄️ <strong>Strong downtrend</strong> - Very bearish</div>
+                <div>🧊 <strong>Sideways/Frozen</strong> - Neutral</div>
+                <div>⏸️ <strong>Waiting</strong> - No data</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stocks = ['NVDA', 'MSFT', 'AVGO', 'GOOGL', 'AAPL', 'AMZN', 'META', 'TSM', 'ASML', 'AMD', 'INTC', 'QCOM'];
+        let stockData = {};
+        let apiCallsUsed = 0;
+        let isLoading = false;
+        let currentBatch = 0;
+        let batchSize = 4;
+
+        // Load stocks from localStorage
+        const savedStocks = localStorage.getItem('tradingStocks');
+        if (savedStocks) {
+            stocks = JSON.parse(savedStocks);
+        }
+
+        function saveStocks() {
+            localStorage.setItem('tradingStocks', JSON.stringify(stocks));
+            updateStockList();
+        }
+
+        function updateStockList() {
+            const container = document.getElementById('stockList');
+            container.innerHTML = stocks.map(symbol => 
+                `<div class="stock-chip">
+                    <span>${symbol}</span>
+                    <button onclick="removeStock('${symbol}')">×</button>
+                </div>`
+            ).join('');
+            
+            document.getElementById('stockCount').textContent = stocks.length;
+            document.getElementById('callEstimate').textContent = stocks.length * 2;
+            updateApiUsage();
+        }
+
+        function addStock(symbol) {
+            symbol = symbol.trim().toUpperCase();
+            if (symbol && !stocks.includes(symbol)) {
+                stocks.push(symbol);
+                saveStocks();
+            }
+        }
+
+        function removeStock(symbol) {
+            stocks = stocks.filter(s => s !== symbol);
+            delete stockData[symbol];
+            saveStocks();
+            updateTable();
+        }
+
+        function addPreset(symbols) {
+            symbols.forEach(s => {
+                if (!stocks.includes(s)) stocks.push(s);
+            });
+            saveStocks();
+        }
+
+        function updateApiUsage() {
+            document.getElementById('apiCallsUsed').textContent = apiCallsUsed;
+            const remaining = 800 - apiCallsUsed;
+            const callsPerRefresh = stocks.length * 2;
+            const refreshesLeft = Math.floor(remaining / callsPerRefresh);
+            document.getElementById('refreshesLeft').textContent = refreshesLeft;
+        }
+
+        function showError(message) {
+            const errorLog = document.getElementById('errorLog');
+            errorLog.style.display = 'block';
+            errorLog.className = 'error-log';
+            errorLog.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <div style="color: #fca5a5; font-weight: 600;">⚠️ Error Log</div>
+                    <button onclick="document.getElementById('errorLog').style.display='none'" style="padding: 4px 8px; font-size: 12px;">Clear</button>
+                </div>
+                <pre>${message}</pre>
+            `;
+        }
+
+        function showStatus(message, success) {
+            const status = document.getElementById('apiStatus');
+            status.className = `status ${success ? 'success' : 'error'}`;
+            status.innerHTML = `${success ? '✓' : '✗'} ${message}`;
+        }
+
+        async function testConnection() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                showStatus('Please enter an API key', false);
+                return;
+            }
+
+            isLoading = true;
+            document.getElementById('testBtn').disabled = true;
+            document.getElementById('testBtn').textContent = 'Testing...';
+
+            try {
+                const response = await fetch(`https://api.twelvedata.com/quote?symbol=NVDA&apikey=${apiKey}`);
+                const data = await response.json();
+
+                if (data.status === 'error') {
+                    showStatus(`API Error: ${data.message}`, false);
+                } else if (data.symbol) {
+                    showStatus(`Connected! NVDA: $${data.close}`, true);
+                } else {
+                    showStatus('Unexpected response format', false);
+                }
+            } catch (error) {
+                showStatus(`Connection failed: ${error.message}`, false);
+                showError(`${new Date().toLocaleTimeString()}: ${error.message}`);
+            }
+
+            isLoading = false;
+            document.getElementById('testBtn').disabled = false;
+            document.getElementById('testBtn').textContent = 'Test Connection';
+        }
+
+        function calculateRSI(prices, period = 14) {
+            if (prices.length < period + 1) return null;
+            
+            // Calculate initial average gain and loss
+            let gains = [];
+            let losses = [];
+            
+            for (let i = 1; i < prices.length; i++) {
+                const change = prices[i] - prices[i - 1];
+                gains.push(change > 0 ? change : 0);
+                losses.push(change < 0 ? Math.abs(change) : 0);
+            }
+            
+            // Initial averages (simple average for first period)
+            let avgGain = gains.slice(0, period).reduce((a, b) => a + b, 0) / period;
+            let avgLoss = losses.slice(0, period).reduce((a, b) => a + b, 0) / period;
+            
+            // Apply Wilder's smoothing for subsequent values
+            for (let i = period; i < gains.length; i++) {
+                avgGain = ((avgGain * (period - 1)) + gains[i]) / period;
+                avgLoss = ((avgLoss * (period - 1)) + losses[i]) / period;
+            }
+            
+            if (avgLoss === 0) return 100;
+            const rs = avgGain / avgLoss;
+            return 100 - (100 / (1 + rs));
+        }
+
+        function calculateSMA(prices, period) {
+            if (prices.length < period) return null;
+            // Take the LAST 'period' prices (most recent)
+            return prices.slice(-period).reduce((a, b) => a + b, 0) / period;
+        }
+
+        function getStateEmoji(rsi, trend) {
+            if (!rsi || !trend) return '⏸️';
+            if (rsi < 30 && trend === 'up') return '🚀';
+            if (rsi > 70) return '🔥';
+            if (trend === 'down' && rsi < 50) return '❄️';
+            if (trend === 'sideways') return '🧊';
+            if (trend === 'up') return '📈';
+            return '📉';
+        }
+
+        async function refreshData() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert('Please enter your API key');
+                return;
+            }
+
+            if (stocks.length === 0) {
+                alert('Please add at least one stock');
+                return;
+            }
+
+            // Reset for new refresh cycle
+            if (currentBatch === 0) {
+                stockData = {};
+                updateTable();
+            }
+
+            isLoading = true;
+            const refreshBtn = document.getElementById('refreshBtn');
+            const progressIndicator = document.getElementById('progressIndicator');
+            refreshBtn.disabled = true;
+            refreshBtn.className = '';
+            refreshBtn.innerHTML = '⏳ Updating...';
+            progressIndicator.style.display = 'block';
+            
+            let callsThisSession = 0;
+            const startIdx = currentBatch * batchSize;
+            const endIdx = Math.min(startIdx + batchSize, stocks.length);
+            const batchStocks = stocks.slice(startIdx, endIdx);
+
+            for (let i = 0; i < batchStocks.length; i++) {
+                const symbol = batchStocks[i];
+                const overallIdx = startIdx + i;
+                
+                progressIndicator.textContent = `Processing ${symbol}... (${overallIdx + 1}/${stocks.length}) - Batch ${currentBatch + 1} of ${Math.ceil(stocks.length / batchSize)}`;
+                
+                try {
+                    // Get quote
+                    const quoteRes = await fetch(`https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${apiKey}`);
+                    const quoteData = await quoteRes.json();
+                    callsThisSession++;
+
+                    if (quoteData.status === 'error') {
+                        throw new Error(quoteData.message);
+                    }
+
+                    // Get time series
+                    const tsRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1day&outputsize=50&apikey=${apiKey}`);
+                    const tsData = await tsRes.json();
+                    callsThisSession++;
+
+                    if (tsData.status === 'error') {
+                        throw new Error(tsData.message);
+                    }
+
+                    const prices = tsData.values.map(v => parseFloat(v.close)).reverse();
+                    const volumes = tsData.values.map(v => parseFloat(v.volume)).reverse();
+                    
+                    const rsi = calculateRSI(prices);
+                    const smaFast = calculateSMA(prices, 20);
+                    const smaSlow = calculateSMA(prices, 50);
+                    const currentPrice = parseFloat(quoteData.close);
+                    const currentVolume = parseFloat(quoteData.volume || volumes[volumes.length - 1] || 0);
+                    const avgVolume = volumes.reduce((a, b) => a + b, 0) / volumes.length;
+                    const volRatio = avgVolume > 0 ? currentVolume / avgVolume : 0;
+
+                    let trend = 'sideways';
+                    if (smaFast && smaSlow) {
+                        if (smaFast > smaSlow * 1.02) trend = 'up';
+                        else if (smaFast < smaSlow * 0.98) trend = 'down';
+                    }
+
+                    stockData[symbol] = {
+                        close: currentPrice,
+                        rsi: rsi,
+                        smaFast: smaFast,
+                        smaSlow: smaSlow,
+                        volRatio: volRatio,
+                        trend: trend,
+                        diagnostics: {
+                            trend: trend === 'up',
+                            rsi: rsi >= 30 && rsi <= 70,
+                            volume: volRatio >= 0.8,
+                            rise: smaFast ? currentPrice > smaFast : false
+                        },
+                        state: getStateEmoji(rsi, trend)
+                    };
+
+                    console.log(`✓ ${symbol} processed`);
+                    updateTable(); // Update table after each stock
+                } catch (error) {
+                    console.error(`${symbol}: ${error.message}`);
+                    stockData[symbol] = { error: error.message };
+                    updateTable();
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between stocks
+            }
+
+            apiCallsUsed += callsThisSession;
+            updateApiUsage();
+            currentBatch++;
+
+            // Check if there are more batches
+            if (currentBatch * batchSize < stocks.length) {
+                // More stocks to process - start 60 second countdown
+                refreshBtn.disabled = true;
+                let countdown = 60;
+                progressIndicator.textContent = `✓ Batch ${currentBatch} complete. Wait ${countdown} seconds before continuing...`;
+                progressIndicator.style.color = '#f59e0b'; // Orange
+                
+                const timer = setInterval(() => {
+                    countdown--;
+                    if (countdown > 0) {
+                        progressIndicator.textContent = `✓ Batch ${currentBatch} complete. Wait ${countdown} seconds before continuing...`;
+                    } else {
+                        clearInterval(timer);
+                        refreshBtn.disabled = false;
+                        refreshBtn.className = 'continue';
+                        refreshBtn.innerHTML = `⏭️ Continue - Next ${Math.min(batchSize, stocks.length - currentBatch * batchSize)} Stocks`;
+                        progressIndicator.textContent = `✅ Ready! Click "Continue" to process next batch.`;
+                        progressIndicator.style.color = '#22c55e';
+                    }
+                }, 1000);
+            } else {
+                // All done
+                currentBatch = 0;
+                const now = new Date();
+                document.getElementById('lastUpdate').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+                progressIndicator.textContent = `✓ All ${stocks.length} stocks completed!`;
+                progressIndicator.style.color = '#22c55e';
+                
+                setTimeout(() => {
+                    progressIndicator.style.display = 'none';
+                    progressIndicator.style.color = '#60a5fa';
+                }, 5000);
+                
+                refreshBtn.disabled = false;
+                refreshBtn.className = '';
+                refreshBtn.innerHTML = `🔄 Refresh Data (<span id="callEstimate">${stocks.length * 2}</span> calls)`;
+            }
+            
+            isLoading = false;
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            
+            if (stocks.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 40px; color: #94a3b8;">Add stocks above to get started</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = stocks.map(symbol => {
+                const data = stockData[symbol];
+                const hasData = data && !data.error;
+                
+                return `<tr>
+                    <td style="font-weight: bold; color: #60a5fa; font-size: 15px;">${symbol}</td>
+                    <td style="font-size: 26px; text-align: center;">${hasData ? data.state : '⏸️'}</td>
+                    <td style="font-weight: 600; color: ${hasData && data.rsi < 30 ? '#22c55e' : hasData && data.rsi > 70 ? '#ef4444' : '#e2e8f0'}">
+                        ${hasData ? data.rsi.toFixed(1) : '-'}
+                    </td>
+                    <td style="font-weight: 600;">${hasData ? '$' + data.close.toFixed(2) : '-'}</td>
+                    <td>${hasData && data.smaFast ? data.smaFast.toFixed(2) : '-'}</td>
+                    <td>${hasData && data.smaSlow ? data.smaSlow.toFixed(2) : '-'}</td>
+                    <td style="font-weight: 600; color: ${hasData && data.volRatio > 1.5 ? '#22c55e' : hasData && data.volRatio < 0.5 ? '#ef4444' : '#e2e8f0'}">
+                        ${hasData ? data.volRatio.toFixed(2) + '×' : '-'}
+                    </td>
+                    <td style="font-size: 13px; color: #94a3b8;">${document.getElementById('lastUpdate').textContent.replace('Last updated: ', '')}</td>
+                    <td>
+                        ${hasData ? `
+                            <span class="diagnostic-badge ${data.diagnostics.trend ? 'pass' : 'fail'}">
+                                ${data.diagnostics.trend ? '✓' : '✗'} Trend
+                            </span>
+                            <span class="diagnostic-badge ${data.diagnostics.rsi ? 'pass' : 'fail'}">
+                                ${data.diagnostics.rsi ? '✓' : '✗'} RSI
+                            </span>
+                            <span class="diagnostic-badge ${data.diagnostics.volume ? 'pass' : 'fail'}">
+                                ${data.diagnostics.volume ? '✓' : '✗'} Vol
+                            </span>
+                            <span class="diagnostic-badge ${data.diagnostics.rise ? 'pass' : 'fail'}">
+                                ${data.diagnostics.rise ? '✓' : '✗'} Rise?
+                            </span>
+                        ` : data ? `<span style="color: #ef4444; font-size: 12px;">❌ ${data.error}</span>` : 
+                        '<span style="color: #64748b; font-size: 12px;">Waiting...</span>'}
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Event listeners
+        document.getElementById('testBtn').addEventListener('click', testConnection);
+        document.getElementById('refreshBtn').addEventListener('click', refreshData);
+        document.getElementById('addStockBtn').addEventListener('click', () => {
+            const input = document.getElementById('newSymbol');
+            addStock(input.value);
+            input.value = '';
+        });
+        document.getElementById('newSymbol').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addStock(e.target.value);
+                e.target.value = '';
+            }
+        });
+
+        // Initialize
+        updateStockList();
+        updateApiUsage();
+    </script>
+</body>
+</html>
